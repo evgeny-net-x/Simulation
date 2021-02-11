@@ -5,9 +5,12 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QFont>
+#include <QTime>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include "cell.h"
+
+#define TIME_SLICE 100 // ms
 
 class Farm: public QWidget
 {
@@ -20,15 +23,15 @@ private:
 
 	Cell *m_cells[16];
 
-	QLabel *m_timeLabel;
-	QLabel *m_totalLabel;
 	QPushButton *m_speed1x_button;
 	QPushButton *m_speed2x_button;
 	QPushButton *m_speed4x_button;
+	QLabel *m_timeLabel;
+	QLabel *m_totalLabel;
 public:
 	Farm(QWidget *parent = nullptr);
 
-	void setTotal(int);
+	void updateTotalLabel(void);
 
 	void plant(Cell &);
 	void harvest(Cell &);

@@ -4,10 +4,11 @@ Farm::Farm(QWidget *parent): QWidget(parent)
 {
 	setWindowTitle("Farm");
 	resize(720, 620);
+	setMinimumHeight(500);
 
 	m_time = 0;
 	m_total = 100;
-	m_timerID = startTimer(100); // ms
+	m_timerID = startTimer(TIME_SLICE);
 
 	QVBoxLayout *mainLayout = new QVBoxLayout(this);
 	QGridLayout *cellLayout = new QGridLayout(this);
@@ -29,8 +30,9 @@ Farm::Farm(QWidget *parent): QWidget(parent)
 	font.setPointSize(20);
 
 	m_timeLabel = new QLabel(this);
+	m_timeLabel->setMinimumWidth(160);
 	m_totalLabel = new QLabel(this);
-	this->setTotal(m_total);
+	this->updateTotalLabel();
 
 	m_speed1x_button = new QPushButton("=>1x", this);
 	m_speed2x_button = new QPushButton("=>2x", this);
@@ -54,10 +56,9 @@ Farm::Farm(QWidget *parent): QWidget(parent)
 	connect(m_speed4x_button, &QPushButton::released, this, &Farm::handle_speed4x_button);
 }
 
-void Farm::setTotal(int total)
+void Farm::updateTotalLabel(void)
 {
-	m_total = total;
-	m_totalLabel->setText("Total: " + QString::number(total));
+	m_totalLabel->setText("Total: " + QString::number(m_total));
 }
 
 void Farm::plant(Cell &cell)
@@ -66,17 +67,19 @@ void Farm::plant(Cell &cell)
 	if (m_total-plantCost < 0)
 		return;
 
-	this->setTotal(m_total - plantCost);
+	m_total -= plantCost;
+	this->updateTotalLabel();
 	cell.plant();
 }
 
 void Farm::harvest(Cell &cell)
 {
 	int profit = this->getCellProfit(cell);
-	if (m_total + profit < 0)
+	if (m_total+profit < 0)
 		return;
 
-	this->setTotal(m_total + profit);
+	m_total += profit;
+	this->updateTotalLabel();
 	cell.harvest();
 }
 
@@ -93,7 +96,9 @@ int Farm::getCellProfit(Cell &cell)
 }
 
 
-//------------------------SLOTS-----------------
+//-------------------------------------------------
+//------------------------SLOTS--------------------
+//-------------------------------------------------
 void Farm::handleCell(Cell &cell)
 {
 	if (cell.state == CELLSTATE_EMPTY)
@@ -105,25 +110,27 @@ void Farm::handleCell(Cell &cell)
 void Farm::handle_speed1x_button(void)
 {
 	killTimer(m_timerID);
-	m_timerID = startTimer(100);
+	m_timerID = startTimer(TIME_SLICE);
 }
 
 void Farm::handle_speed2x_button(void)
 {
 	killTimer(m_timerID);
-	m_timerID = startTimer(100/2);
+	m_timerID = startTimer(TIME_SLICE/2);
 }
 
 void Farm::handle_speed4x_button(void)
 {
 	killTimer(m_timerID);
-	m_timerID = startTimer(100/4);
+	m_timerID = startTimer(TIME_SLICE/4);
 }
 
 void Farm::timerEvent(QTimerEvent *e)
 {
 	Q_UNUSED(e);
-	m_timeLabel->setText("Time: " + QString::number(m_time));
+
+	QTime time(m_time/(24*60), m_time/60, m_time%60); // HMS
+	m_timeLabel->setText("Time: " + time.toString());
 	m_time++;
 
 	for (int i = 0; i < 16; i++)
